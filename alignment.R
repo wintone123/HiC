@@ -1,43 +1,42 @@
+# load library
+genome <- library(BSgenome.Mmusculus.UCSC.mm10)
+
 # load genome info
+genome <- seqinfo(genome)
 bin_size = 100000
 
 # import data
-
-# alignmnet
 nrow_import <- nrow(import)
-output_1 <- data.frame(chr1 = rep(NA, nrow_import),
-					 start1 = rep(NA, nrow_import),
-					 end1 = rep(NA, nrow_import),
-					 chr2 = rep(NA, nrow_import),
-					 start2 = rep(NA, nrow_import),
-					 end2 = rep(NA, nrow_import),
-					 stringsAsFactors = FALSE)
-for (i in nrow_import) {
-	# alignment part 1
-	bin1_start <- import$start1[i] %/% bin_size * bin_size + 1
-	bin1_end <- (import$end1[i] %/% bin_size + 1) * bin_size
-	if (bin1_end >= length(genome[import$chr1[i]])) {
-		bin1_end <- length(genome[import$chr1[i]])
-	}
 
-	# alignment part 2
-	bin2_start <- import$start2[i] %/% bin_size * bin_size + 1
-	bin2_end <- (import$end2[i] %/% bin_size + 1) * bin_size
-	if (bin2_end >= length(genome[import$chr2[i]])) {
-		bin2_end <- length(genome[import$chr2[i]])
+# reorder
+for (i in nrow(import_1)) {
+	if (import_1$chr1[i] > import_1$chr2[i]) {
+		temp1 <- import_1[i,1:3]
+		temp2 <- import_1[i,4:6]
+		import_1[i,1:3] <- temp1
+		import_1[i,4:6] <- temp2
+	} else if (import_1$chr1[i] == import_1$chr2[i] & import_1$start1[i] >  import_1$start2[i]) {
+		temp1 <- import_1[i,1:3]
+		temp2 <- import_1[i,4:6]
+		import_1[i,1:3] <- temp1
+		import_1[i,4:6] <- temp2
 	}
-
-	# output
-	output_1$chr1[i] <- chr1
-	output_1$start1[i] <- bin1_start
-	output_1$end1[i] <- bin1_end
-	output_1$chr2[i] <- chr2
-	output_1$start2[i] <- bin2_start
-	output_1$end2[i] <- bin2_end
 }
 
-# data arrangement
-output_1 <- unite(output_1, temp, c(1:6), sep = "_")
+# alignmnet
+output_1 <- data.frame(chr1 = import$chr1,
+					   start1 = import$start1 %/% bin_size * bin_size,
+					   end1 = (import$end1 %/% bin_size + 1) * bin_size, 
+					   chr2 = import$chr2,
+					   start2 = import$start2 %/% bin_size * bin_size,
+					   end2 = (import$end2 %/% bin_size + 1) * bin_size,
+					   stringsAsFactors = FALSE)
+chr_length_1 <- seqlength(genome)[output_1$chr1]
+output_1[output_1$end1 >= chr_length_1, "end1"] <- chr_length_1[output_1$end1 >= chr_length_1]
+chr_length_2 <- seqlength(genome)[output_1$chr2]
+output_1[output_1$end2 >= chr_length_2, "end1"] <- chr_length_2[output_1$end2 >= chr_length_2]
+
+# scoring
 s = 1
 n = 0
 cond = TRUE
@@ -58,4 +57,5 @@ while (cond) {
 		}
 	}
 }
+
 # output data
