@@ -7,6 +7,7 @@ genome <- seqinfo(BSgenome.Mmusculus.UCSC.mm10)
 bin_size = 100000
 
 # import data
+path = ""
 
 # reorder
 # for (i in nrow(import)) {
@@ -23,7 +24,7 @@ bin_size = 100000
 # 	}
 # }
 
-# alignmnet to bin
+# binning
 output_1 <- data.frame(chr1 = import$chr1,
 					   start1 = import$start1 %/% bin_size + 1,
 					   end1 = import$end1 %/% bin_size + 1, 
@@ -65,7 +66,7 @@ output_2$end1 <- as.numeric(output_2$end1)
 output_2$start2 <- as.numeric(output_2$start2)
 output_2$end2 <- as.numeric(output_2$end2)
 
-# matrixing data
+# matrixing 
 chr_xy <- sort(unique(c(output_2$chr1, output_2$chr2)))
 xy_list <- vector()
 for (i in chr_xy) {
@@ -113,3 +114,4 @@ for (i in nrow(output_2)) {
 }
 
 # output data
+write.csv(mat, path)
