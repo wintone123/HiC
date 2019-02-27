@@ -1,23 +1,65 @@
 # load library
-library(tidyverse)
+library(dplyr)
+library(tidyr)
+library(pheatmap)
+library(RColorBrewer)
 
-# load genome info
-genome_length <- 107043718 # hg18 chr14
-bin_size = 100000 
+#load function
+save_pheatmap_pdf <- function(x, filename, width=7, height=7) {
+   stopifnot(!missing(x))
+   stopifnot(!missing(filename))
+   pdf(filename, width=width, height=height)
+   grid::grid.newpage()
+   grid::grid.draw(x$gtable)
+   dev.off()
+}
+
+# load info
+path <- "/mnt/c/HiC/test1"
+imput_csv <- "chr14.csv"
+output_csv <- "chr14_200k.csv"
+output_pdf <-  "chr14_200k.pdf"
+bin_size <- 200000 
+chosen_chr1 <- 14
+chosen_start1 <- 30000000
+chosen_end1 <- 67043718
+chosen_chr2 <- 14
+chosen_start2 <- 30000000
+chosen_end2 <- 67043718
 
 # import data
-path = "/mnt/c/HiC/test1"
-import <- read.delim(file.path(path, "chr14.csv"), sep = ",", row.names = 1, header = TRUE)
+import <- read.delim(file.path(path, imput_csv), sep = ",", row.names = 1, header = TRUE)
+
+# judgement
+if (chosen_chr1 == chosen_chr2 & chosen_start1 == chosen_start2 & chosen_end1 == chosen_end2) {
+	mode <- "same"
+} else {
+	mode <- "diff"
+} 
+
+# filtering
+if (mode == "diff") {
+	filt_temp1 <- filter(import, chr1 == chosen_chr1 & position1 >= chosen_start1 & position1 <= chosen_end1)
+	filter_temp1_1 <- filter(filt_temp1, chr2 == chosen_chr1 & position2 >= chosen_start1 & position2 <= chosen_end1)
+	filter_temp1_2 <- filter(filt_temp1, chr2 == chosen_chr2 & position2 >= chosen_start2 & position2 <= chosen_end2)
+	filt_temp2 <- filter(import, chr2 == chosen_chr2 & position2 >= chosen_start2 & position2 <= chosen_end2)
+	filter_temp2_1 <- filter(filt_temp2, chr1 == chosen_chr1 & position1 >= chosen_start1 & position1 <= chosen_end1)
+	filter_temp2_2 <- filter(filt_temp2, chr1 == chosen_chr2 & position1 >= chosen_start2 & position1 <= chosen_end2)
+	import_2 <- rbind(filter_temp1_1, filter_temp1_2, filter_temp2_1, filter_temp2_2)
+} else {
+	filt_temp <- filter(import, chr1 == chosen_chr1 & position1 >= chosen_start1 & position1 <= chosen_end1)
+	import_2 <- filter(filt_temp, chr2 == chosen_chr2 & position2 >= chosen_start2 & position2 <= chosen_end2)
+}
 
 # binning
 print("----------binning......----------")
-output_1 <- data.frame(chr1 = import$chr1,
-					   start1 = import$position1 %/% bin_size + 1,
-					   chr2 = import$chr2,
-					   start2 = import$position2 %/% bin_size + 1,
+output_1 <- data.frame(chr1 = import_2$chr1,
+					   start1 = import_2$position1 %/% bin_size + 1,
+					   chr2 = import_2$chr2,
+					   start2 = import_2$position2 %/% bin_size + 1,
 					   stringsAsFactors = FALSE)
-output_1 <- arrange(output_1, start1, start2)
-output_1 <- filter(output_1, start1 != start2)
+output_1 <- arrange(output_1, chr1, start1, chr2, start2)
+output_1 <- filter(output_1, chr1 != chr2 | start1 != start2)
 
 # scoring
 print("----------scoring......----------")
@@ -49,22 +91,23 @@ while (cond) {
 }
 output_2 <- output_2[2:nrow(output_2),]
 output_2 <- separate(output_2, name, c("chr1","start1","chr2","start2"), sep = "_")
-output_2$start1 <- as.numeric(output_2$start1)
-output_2$start2 <- as.numeric(output_2$start2)
 
 # output data
 print("----------writing csv......----------")
-write.csv(output_2, file.path(path, "output_100k.csv"))
-q()
+write.csv(output_2, file.path(path, output_csv))
 
 # matrixing 
 print("----------matrixing......----------")
-chr_xy <- sort(unique(c(output_2$chr1, output_2$chr2)))
 xy_list <- vector()
-for (i in chr_xy) {
-	length <- genome_length
-	bin_num <- length %/% bin_size + 1
-	xy_list <- append(xy_list, paste(i, 61:bin_num, sep = "_"))
+chr1_bin_end <- chosen_end1/ bin_size + 1
+chr1_bin_start <- chosen_start1 / bin_size + 1
+chr2_bin_end <- chosen_end2/ bin_size + 1
+chr2_bin_start <- chosen_start2 / bin_size + 1
+if (mode == "diff") {
+	xy_list <- paste0(chosen_chr1,"_",c(chr1_bin_start:chr1_bin_end))
+	xy_list <- append(xy_list, paste0(chosen_chr2,"_",c(chr2_bin_start:chr2_bin_end)))
+} else {
+	xy_list <- paste0(chosen_chr1,"_",c(chr1_bin_start:chr1_bin_end))
 }
 mat <- matrix(rep(0, length(xy_list)*length(xy_list)), length(xy_list), length(xy_list))
 colnames(mat) <- xy_list
@@ -76,9 +119,15 @@ for (i in 1:nrow(output_2)) {
 	chr2 <- output_2$chr2[i]
 	mat[chr1,chr2] <- output_2$score[i] + mat[chr1,chr2]
 	mat[chr2,chr1] <- output_2$score[i] + mat[chr2,chr1]
-
 }
 
+# heatmapping
+breaks <- seq(min(output_2$score), max(output_2$score), length.out = 256)
+col <- colorRampPalette(rev(brewer.pal(11,"RdYlBu")))
+pic <- pheatmap(mat, cluster_rows = FALSE, cluster_cols = FALSE,
+				show_rownames = FALSE, show_colnames = FALSE, 
+				col = col(256), breaks = breaks, legend = FALSE)
+
 # output data
-print("----------writing csv......----------")
-write.csv(mat, file.path(path, "output2.csv"))
+print("----------writing pdf......----------")
+save_pheatmap_pdf(pic, file.path(path, output_pdf))
