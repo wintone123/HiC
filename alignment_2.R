@@ -17,13 +17,13 @@ save_pheatmap_pdf <- function(x, filename, width=7, height=7) {
 # load info
 path <- "/mnt/c/HiC/test1"
 imput_csv <- "chr14_1.csv"
-output_csv <- "chr14_200k.csv"
-output_pdf <-  "chr14_200k.pdf"
-bin_size <- 1000000
+output_csv <- "chr14_40k.csv"
+output_pdf <-  "chr14_40k.pdf"
+bin_size <- 40000
 chosen_chr1 <- c(14)
-chosen_aera1 <- c(20000000,90000000)
+chosen_aera1 <- c(40000000,60000000)
 chosen_chr2 <- c(14)
-chosen_aera2 <- c(20000000,90000000)
+chosen_aera2 <- c(40000000,60000000)
 col <- colorRampPalette(brewer.pal(9,"YlOrRd"))
 
 # load file
@@ -66,9 +66,9 @@ filt_temp <- filt_temp[2:nrow(filt_temp),]
 
 # binning
 print("----------binning......----------")
-bins <- data.frame(chr1 = filt_temp$chr1,
+bins <- data.frame(chr1 = as.character(filt_temp$chr1),
 				   start1 = filt_temp$start1 %/% bin_size + 1,
-				   chr2 = filt_temp$chr2,
+				   chr2 = as.character(filt_temp$chr2),
 				   start2 = filt_temp$start2 %/% bin_size + 1,
 				   stringsAsFactors = FALSE)
 bins <- arrange(bins, chr1, start1, chr2, start2)
