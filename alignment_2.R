@@ -19,11 +19,12 @@ path <- "/mnt/c/HiC/test1"
 imput_csv <- "chr14_1.csv"
 output_csv <- "chr14_40k.csv"
 output_pdf <-  "chr14_40k.pdf"
-bin_size <- 40000
+output_png <- "chr14_40k.png"
+bin_size <- 100000
 chosen_chr1 <- c(14)
-chosen_aera1 <- c(40000000,60000000)
+chosen_aera1 <- c(20000000,30000000)
 chosen_chr2 <- c(14)
-chosen_aera2 <- c(40000000,60000000)
+chosen_aera2 <- c(20000000,30000000)
 col <- colorRampPalette(brewer.pal(9,"YlOrRd"))
 
 # load file
@@ -87,14 +88,12 @@ while (cond) {
 		if (temp_df$temp[i] == data) {
 			n = n + 1
 			if (i == nrow(temp_df)) {
-				print(paste0(data,"---",n))
 				temp <- data.frame(name = data, score = n)
 				scores <- rbind(scores, temp)
 				cond = FALSE
 			}
 		} else {
 			s = i 
-			print(paste0(data,"---",n))
 			temp <- data.frame(name = data, score = n)
 			scores <- rbind(scores, temp)
 			n = 0
@@ -142,7 +141,8 @@ for (i in 1:nrow(scores)) {
 breaks <- seq(min(scores$score), max(scores$score), length.out = 256)
 pic <- pheatmap(mat, cluster_rows = FALSE, cluster_cols = FALSE,
 				show_rownames = FALSE, show_colnames = FALSE, 
-				col = col(256), breaks = breaks, legend = FALSE, border_color = NA)
+				col = col(256), breaks = breaks, legend = FALSE, border_color = NA,
+                filename = file.path(path, output_png))
 
 # output data
 print("----------writing pdf......----------")
