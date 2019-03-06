@@ -5,64 +5,48 @@ library(dplyr)
 # load info
 path <- "/mnt/c/HiC/test2"
 imput_csv <- "chr14_1.csv"
-output_csv <- "chr14_40k.csv"
-bin_size <- 100000
-extra_size <- 400000
-chosen_area <- c(20000000,30000000)
+output_csv <- "chr14_40k_DI.csv"
+output_scores <- "chr14_40k_score.csv"
+bin_size <- 40000
+extra_size <- 2000000
+chosen_area <- c(45000000,50000000)
 
 # load file
 import <- read.delim(file.path(path, imput_csv), sep = ",", row.names = 1, header = TRUE)
 
 # choose area
-bin_start <- chosen_area[1] %/% 40000 + 1
-bin_end <- chosen_area[2] %/% 40000 +1
+bin_start <- chosen_area[1] %/% bin_size + 1
+bin_end <- chosen_area[2] %/% bin_size +1
 extra_bin <- extra_size %/% bin_size
 upstream <- bin_end + extra_bin
 downstream <- bin_start - extra_bin
 
 # binning 
 print("----------binning......----------")
-bins_temp <- data.frame(start1 = import$start1 %/% bin_size + 1,
-				   start2 = import$start2 %/% bin_size + 1,
-				   stringsAsFactors = FALSE)
+bins <- data.frame(start1 = import$start1 %/% bin_size + 1,
+			       start2 = import$start2 %/% bin_size + 1)
 
-# change position & filting
-print("----------exchanging & filtering......----------")
-bins <- data.frame(start1 = ifelse(bins_temp$start1 < bins_temp$start2, bins_temp$start1, bins_temp$start2),
-				   start2 = ifelse(bins_temp$start1 < bins_temp$start2, bins_temp$start2, bins_temp$start1))
+# filting
+print("---------filtering......---------")
+bins <- filter(bins, start1 >= downstream & start1 <= upstream & start2 >= downstream & start2 <= upstream)
 bins <- arrange(bins, start1, start2)
 bins <- filter(bins, start1 != start2)
-bins <- filter(bins, start1 >= downstream & start1 <= upstream)
 
 # scoring
 print("----------scoring......----------")
-scores <- data.frame(position = NA, score = NA)
-s = 1
-n = 0
-cond = TRUE
-while (cond) {
-	for (i in s:nrow(bins)) {
-		data <- bins$start1[s]
-		if (bins$start1[i] == data) {
-			n = n + 1
-			if (i == nrow(bins)) {
-				temp <- data.frame(position = data, score = n)
-				scores <- rbind(scores, temp)
-				cond = FALSE
-			}
-		} else {
-			s = i 
-			temp <- data.frame(position = data, score = n)
-			scores <- rbind(scores, temp)
-			n = 0
- 		    break
-		}
-	}
+scores <- data.frame(position = c(downstream:upstream), score = 0)
+for (i in 1:nrow(bins)) {
+	scores[scores$position == bins$start1[i],"score"] = scores[scores$position == bins$start1[i],"score"] + 1
+	scores[scores$position == bins$start2[i],"score"] = scores[scores$position == bins$start2[i],"score"] + 1
+
 }
-scores <- scores[2:nrow(scores),]
+
+# output data
+print("--------writing csv......--------")
+write.csv(scores, file.path(path, output_scores))
 
 # calculating
-print("----------calculating......----------")
+print("--------calculating......--------")
 output <- data.frame(position = c(bin_start: bin_end),
                      hits = rep(0, length(c(bin_start: bin_end))))
 for (i in 1:nrow(output)) {
@@ -75,5 +59,5 @@ for (i in 1:nrow(output)) {
 }
 
 # output data
-print("----------writing csv......----------")
+print("--------writing csv......--------")
 write.csv(output, file.path(path, output_csv))
