@@ -32,13 +32,14 @@ max_legend <- function(a) {
 path <- "/mnt/c/HiC/test1"
 imput_csv <- "chr14_1.csv"
 output_csv <- "chr14_40k.csv"
+output_mat <- "chr14_40k_mat.csv"
 output_pdf <-  "chr14_40k.pdf"
-output_png <- "chr14_40k.png"
-bin_size <- 40000
+output_png <- "chr14_5k.png"
+bin_size <- 5000
 chosen_chr1 <- c(14)
-chosen_aera1 <- c(43000000,52000000)
+chosen_aera1 <- c(70000000,71000000)
 chosen_chr2 <- c(14)
-chosen_aera2 <- c(43000000,52000000)
+chosen_aera2 <- c(70000000,71000000)
 col <- colorRampPalette(brewer.pal(9,"YlOrRd"))
 
 # load file
@@ -58,16 +59,10 @@ if (all(chosen_chr1 == chosen_chr2)) {
 # binning
 print("------------binning......------------")
 bins <- data.frame(chr1 = as.character(import$chr1),
-				        start1 = import$start1 %/% bin_size + 1,
-				        chr2 = as.character(import$chr2),
-				        start2 = import$start2 %/% bin_size + 1,
-				        stringsAsFactors = FALSE)
-bins <- arrange(bins, chr1, start1, chr2, start2)
-if (mode == "SCSA") { # remove same bins
-    bins <- filter(bins, start1 != start2) 
-} else {
-    bins <- filter(bins, chr1 != chr2 & start1 != start2)
-} 
+			       start1 = import$start1 %/% bin_size + 1,
+			       chr2 = as.character(import$chr2),
+			       start2 = import$start2 %/% bin_size + 1,
+			       stringsAsFactors = FALSE)
 
 # filtering
 print("-----------filtering......-----------")
@@ -75,16 +70,23 @@ chosen_bin1 <- chosen_aera1 %/% bin_size + 1
 chosen_bin2 <- chosen_aera2 %/% bin_size + 1
 if (mode == "SCSA") {
     bins_fil <- filter(bins, chr1 == chosen_chr1[1] & start1 >= chosen_bin1[1] & start1 <= chosen_bin1[2] & 
-                       chr1 == chosen_chr2[1] & start2 >= chosen_bin2[1] & start2 <= chosen_bin2[2])
+                       chr2 == chosen_chr2[1] & start2 >= chosen_bin2[1] & start2 <= chosen_bin2[2])
 } else {
-    bins_fil <- filter(bins, chr1 == chosen_chr1[1] & start1 >= chosen_bin1[1] & start1 <= chosen_bin1[2] & 
-                       chr1 == chosen_chr1[1] & start2 >= chosen_bin1[1] & start2 <= chosen_bin1[2])
-    bins_fil <- filter(bins, chr1 == chosen_chr1[1] & start1 >= chosen_bin1[1] & start1 <= chosen_bin1[2] & 
-                       chr1 == chosen_chr2[1] & start2 >= chosen_bin2[1] & start2 <= chosen_bin2[2])
-    bins_fil <- filter(bins, chr1 == chosen_chr2[1] & start1 >= chosen_bin2[1] & start1 <= chosen_bin2[2] & 
-                       chr1 == chosen_chr1[1] & start2 >= chosen_bin1[1] & start2 <= chosen_bin1[2])
-    bins_fil <- filter(bins, chr1 == chosen_chr2[1] & start1 >= chosen_bin2[1] & start1 <= chosen_bin2[2] & 
-                       chr1 == chosen_chr2[1] & start2 >= chosen_bin2[1] & start2 <= chosen_bin2[2])
+    bins_fil <- data.frame(chr1 = NA, start1 = NA, chr2 = NA, start2 = NA)
+    bins_fil <- rbind(bins_fil, filter(bins, chr1 == chosen_chr1[1] & start1 >= chosen_bin1[1] & start1 <= chosen_bin1[2] & 
+                                       chr1 == chosen_chr1[1] & start2 >= chosen_bin1[1] & start2 <= chosen_bin1[2]))
+    bins_fil <- rbind(bins_fil, filter(bins, chr1 == chosen_chr1[1] & start1 >= chosen_bin1[1] & start1 <= chosen_bin1[2] & 
+                                       chr1 == chosen_chr2[1] & start2 >= chosen_bin2[1] & start2 <= chosen_bin2[2]))
+    bins_fil <- rbind(bins_fil, filter(bins, chr1 == chosen_chr2[1] & start1 >= chosen_bin2[1] & start1 <= chosen_bin2[2] & 
+                                       chr1 == chosen_chr1[1] & start2 >= chosen_bin1[1] & start2 <= chosen_bin1[2]))
+    bins_fil <- rbind(bins_fil, filter(bins, chr1 == chosen_chr2[1] & start1 >= chosen_bin2[1] & start1 <= chosen_bin2[2] & 
+                                       chr1 == chosen_chr2[1] & start2 >= chosen_bin2[1] & start2 <= chosen_bin2[2]))
+    bins_fil <- bins_fil[2:nrow(bins_fil),]
+} 
+if (mode != "DC") { # remove same bins
+    bins_fil <- filter(bins_fil, start1 != start2) 
+} else {
+    bins_fil <- filter(bins_fil, chr1 != chr2 & start1 != start2)
 } 
 if (mode != "DC") {
     bins_fil2 <- data.frame(chr1 = bins_fil$chr1,
@@ -93,6 +95,7 @@ if (mode != "DC") {
                             start2 = ifelse(bins_fil$start1 <= bins_fil$start2, bins_fil$start2, bins_fil$start1),
                             stringsAsFactors = FALSE)
 }
+bins_fil2 <- arrange(bins_fil2, chr1, start1, chr2, start2)
 
 # scoring
 print("------------scoring......------------")
@@ -107,12 +110,14 @@ while (cond) {
 		if (temp_df$temp[i] == data) {
 			n = n + 1
 			if (i == nrow(temp_df)) {
+                # print(paste0(data,"--",n))
 				temp <- data.frame(name = data, score = n)
 				scores <- rbind(scores, temp)
 				cond = FALSE
 			}
 		} else {
 			s = i 
+            # print(paste0(data,"--",n))
 			temp <- data.frame(name = data, score = n)
 			scores <- rbind(scores, temp)
 			n = 0
@@ -165,6 +170,9 @@ pic <- pheatmap(mat, cluster_rows = FALSE, cluster_cols = FALSE,
 				col = col(length(breaks)), breaks = breaks, legend = FALSE, border_color = NA,
                 filename = file.path(path, output_png))
 
-# output data
+# output mat
+# output mat
+print("----------writing csv......----------")
+write.csv(mat, file.path(path, output_mat))
 print("----------writing pdf......----------")
 save_pheatmap_pdf(pic, file.path(path, output_pdf))
