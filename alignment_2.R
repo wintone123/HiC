@@ -31,15 +31,12 @@ max_legend <- function(a) {
 # load info
 path <- "/mnt/c/HiC/test3"
 imput_csv <- "test_fil.csv"
-output_csv <- "chr7_500k.csv"
-output_mat <- "chr7_500k_mat.csv"
-output_pdf <-  "chr7_500k.pdf"
-output_png <- "chr7_500k.png"
-bin_size <- 500000
-chosen_chr1 <- c("7")
-chosen_aera1 <- c(1,160000000)
-chosen_chr2 <- c("7")
-chosen_aera2 <- c(1,160000000)
+output_name <-"chr7_250k"
+bin_size <- 250000
+chosen_chr1 <- c("17")
+chosen_aera1 <- c(1,80000000)
+chosen_chr2 <- c("17")
+chosen_aera2 <- c(1,80000000)
 col <- colorRampPalette(brewer.pal(9,"YlOrRd"))
 
 # load file
@@ -98,7 +95,7 @@ bins_fil2 <- arrange(bins_fil2, chr1, start1, chr2, start2)
 
 # output data
 # print("----------writing csv......----------")
-# write.csv(bins_fil2, file.path(path, "bins_fil2.csv"))
+# write.csv(bins_fil2, paste0(path, "/", output_name, ".csv"))
 # q()
 
 # scoring
@@ -134,18 +131,16 @@ scores <- scores[2:nrow(scores),]
 scores <- separate(scores, name, c("chr1","start1","chr2","start2"), sep = "_")
 
 # output data
-print("----------writing csv......----------")
-write.csv(scores, file.path(path, output_csv))
+# print("----------writing csv......----------")
+# write.csv(scores, paste0(path, "/", output_name, "_scores.csv"))
 
 # matrixing 
 print("-----------matrixing......-----------")
 xy_list <- vector()
 if (mode == "SCSA") {
-    for (i in length(chosen_chr1)){
-        bin_start <- chosen_aera1[i] %/% bin_size + 1
-        bin_end <- chosen_aera1[i*2] %/% bin_size + 1
-        xy_list <- append(xy_list, paste0(chosen_chr1[i], "_", c(bin_start:bin_end)))
-    }
+    bin_start <- chosen_aera1[1] %/% bin_size + 1
+    bin_end <- chosen_aera1[2] %/% bin_size + 1
+    xy_list <- append(xy_list, paste0(chosen_chr1[1], "_", c(bin_start:bin_end)))
 } else {
     bin_start_1 <- chosen_aera1[1] %/% bin_size + 1
     bin_end_1 <- chosen_aera1[2] %/% bin_size + 1
@@ -168,7 +163,7 @@ for (i in 1:nrow(scores)) {
 
 # output mat
 # print("----------writing csv......----------")
-# write.csv(mat, file.path(path, output_mat))
+# write.csv(mat, paste0(path, "/", output_name, "_mat.csv"))
 
 # heatmapping
 breaks <- c(0, 2^(0:max_legend(max(mat))))
@@ -176,6 +171,6 @@ breaks <- c(0, 2^(0:max_legend(max(mat))))
 pic <- pheatmap(mat, cluster_rows = FALSE, cluster_cols = FALSE,
 				show_rownames = FALSE, show_colnames = FALSE, 
 				col = col(length(breaks)), breaks = breaks, legend = FALSE, border_color = NA,
-                filename = file.path(path, output_png))
+                filename = paste0(path, "/", output_name, ".png"))
 # print("----------writing pdf......----------")
-# save_pheatmap_pdf(pic, file.path(path, output_pdf))
+# save_pheatmap_pdf(pic, paste0(path, "/", output_name, ".pdf"))
