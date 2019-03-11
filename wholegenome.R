@@ -132,6 +132,7 @@ for (i in 1:nrow(scores)) {
 # write.csv(mat, paste0(path, "/", output_name, "_mat.csv"))
 
 # heatmapping
+print("----------heatmapping......----------")
 breaks <- c(0, 2^(0:max_legend(max(mat))))
 # breaks <- seq(min(mat),max(mat),length.out = 256)
 pic <- pheatmap(mat, cluster_rows = FALSE, cluster_cols = FALSE,

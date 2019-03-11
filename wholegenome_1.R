@@ -37,18 +37,18 @@ add_scores <- function(temp_df) {
     n = 0
     cond = TRUE
     while (cond) {
-        for (i in s:nrow(temp_df)) {
+        for (l in s:nrow(temp_df)) {
             data <- temp_df$temp[s]
-            if (temp_df$temp[i] == data) {
+            if (temp_df$temp[l] == data) {
                 n <- n + 1
-                if (i == nrow(temp_df)) {
+                if (l == nrow(temp_df)) {
                     # print(paste0(data,"--",n))
                     temp <- data.frame(name = data, score = n)
                     scores <- rbind(scores, temp)
                     cond = FALSE
                 }
             } else {
-                s <- i 
+                s <- l 
                 # print(paste0(data,"--",n))
                 temp <- data.frame(name = data, score = n)
                 scores <- rbind(scores, temp)
@@ -57,7 +57,7 @@ add_scores <- function(temp_df) {
             }
         }
     }
-        scores <- scores[2:nrow(scores),]
+    scores <- scores[2:nrow(scores),]
     scores <- separate(scores, name, c("chr1","start1","chr2","start2"), sep = "_")
     return(scores)
 }
@@ -88,6 +88,7 @@ bins <- data.frame(chr1 = as.character(import$chr1),
 			       stringsAsFactors = FALSE)
 
 # making matrix
+print("---------making matrix......---------")
 xy_list <- vector()
 for (i in 1:length(chosen_chr)) {
     xy_list <- append(xy_list, paste0(chosen_chr[i], "_", c(1:bins_list[i])))
@@ -97,11 +98,11 @@ colnames(mat) <- xy_list
 rownames(mat) <- xy_list
 
 # loop
-print("-----------loop start......-----------")
+print("-------------loop start-------------")
 bins <- filter(bins, chr1 != chr2 | start1 != start2)
 for (i in 1:length(chosen_chr)) {
     for (j in 1:length(chosen_chr)) {
-        print("--------proceesing chr",chosen_chr[i], "_chr", chosen_chr[j],"--------")
+        print(paste0("--------proceesing chr",chosen_chr[i], "-chr", chosen_chr[j], "--------"))
 
         # filtering
         bins_fil <- filter(bins, chr1 == chosen_chr[i] & start1 >= 1 & start1 <= bins_list[i] &
@@ -114,16 +115,18 @@ for (i in 1:length(chosen_chr)) {
         # matrixing
         scores <- unite(scores, chr1, c("chr1","start1"), sep = "_")
         scores <- unite(scores, chr2, c("chr2","start2"), sep = "_")
-        for (i in 1:nrow(scores)) {
-            chr1 <- scores$chr1[i]
-            chr2 <- scores$chr2[i]
-            mat[chr1, chr2] <- scores$score[i] + mat[chr1, chr2]
-            mat[chr2, chr1] <- scores$score[i] + mat[chr2, chr1]
+        for (k in 1:nrow(scores)) {
+            chr1 <- scores$chr1[k]
+            chr2 <- scores$chr2[k]
+            mat[chr1, chr2] <- scores$score[k] + mat[chr1, chr2]
+            mat[chr2, chr1] <- scores$score[k] + mat[chr2, chr1]
         }
     }
 }
+print("--------------loop end--------------")
 
 # heatmapping
+print("----------heatmapping......----------")
 breaks <- c(0, 2^(0:max_legend(max(mat))))
 # breaks <- seq(min(mat),max(mat),length.out = 256)
 pic <- pheatmap(mat, cluster_rows = FALSE, cluster_cols = FALSE,
