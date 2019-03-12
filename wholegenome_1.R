@@ -4,6 +4,7 @@ library(tidyr)
 library(pheatmap)
 library(RColorBrewer)
 library(BSgenome.Hsapiens.UCSC.hg38)
+ulimit::memory_limit(4000)
 
 #load function
 save_pheatmap_pdf <- function(x, filename, width=7, height=7) {
@@ -35,6 +36,8 @@ add_scores <- function(temp_df) {
     scores <- data.frame(name = NA, score = NA)
     s = 1
     n = 0
+    # j <- 0
+    # k <- 0
     cond = TRUE
     while (cond) {
         for (l in s:nrow(temp_df)) {
@@ -42,19 +45,26 @@ add_scores <- function(temp_df) {
             if (temp_df$temp[l] == data) {
                 n <- n + 1
                 if (l == nrow(temp_df)) {
-                    # print(paste0(data,"--",n))
+                    # cat(paste0(data,"--",n))
                     temp <- data.frame(name = data, score = n)
                     scores <- rbind(scores, temp)
                     cond = FALSE
                 }
             } else {
                 s <- l 
-                # print(paste0(data,"--",n))
+                # cat(paste0(data,"--",n))
                 temp <- data.frame(name = data, score = n)
                 scores <- rbind(scores, temp)
                 n <- 0
                 break
             }
+            # if ((j / nrow(temp_df) * 100) %/% 1 == k) { # progress bar
+            #     # cat("--------------------", k, "%--------------------", "\r", sep = "")
+            #     cat("[", paste(rep("#", (36*k/100) %/% 1),collapse = ""), 
+            #     paste(rep("_", 36-(36*k/100) %/% 1),collapse = ""), "]","\r", sep = "")
+            #     k <- k + 1
+            # }
+            # j <- j + 1
         }
     }
     scores <- scores[2:nrow(scores),]
@@ -65,14 +75,15 @@ add_scores <- function(temp_df) {
 # load info
 path <- "/mnt/c/HiC/test3"
 imput_csv <- "test_fil.csv"
-output_name <-"chr1-X_5m"
-bin_size <- 5000000
+output_name <-"chr1-X_2m"
+bin_size <- 2000000
 chosen_chr <- c(1:22,"X")
 col <- colorRampPalette(brewer.pal(9,"YlOrRd"))
 
 # load file
-print("----------loading csv......----------")
+cat("--------------loading csv--------------", "\n")
 import <- read.delim(file.path(path, imput_csv), sep = ",", row.names = 1, header = TRUE)
+# cat(object.size(import), "\n")
 
 # load genome info
 genome <- seqinfo(BSgenome.Hsapiens.UCSC.hg38)
@@ -80,15 +91,16 @@ seqlength_list <- seqlengths(genome)[paste0("chr", chosen_chr)]
 bins_list <- seqlength_list %/% bin_size + 1
 
 # binning
-print("------------binning......------------")
+cat("----------------binning----------------", "\n")
 bins <- data.frame(chr1 = as.character(import$chr1),
 			       start1 = import$start1 %/% bin_size + 1,
 			       chr2 = as.character(import$chr2),
 			       start2 = import$start2 %/% bin_size + 1,
 			       stringsAsFactors = FALSE)
+# cat(object.size(bins), "\n")
 
 # making matrix
-print("---------making matrix......---------")
+cat("-------------making matrix-------------", "\n")
 xy_list <- vector()
 for (i in 1:length(chosen_chr)) {
     xy_list <- append(xy_list, paste0(chosen_chr[i], "_", c(1:bins_list[i])))
@@ -98,19 +110,22 @@ colnames(mat) <- xy_list
 rownames(mat) <- xy_list
 
 # loop
-print("-------------loop start-------------")
+cat("---------------loop start---------------", "\n")
 bins <- filter(bins, chr1 != chr2 | start1 != start2)
+# cat(object.size(bins), "\n")
 for (i in 1:length(chosen_chr)) {
     for (j in 1:length(chosen_chr)) {
-        print(paste0("--------proceesing chr",chosen_chr[i], "-chr", chosen_chr[j], "--------"))
+        cat(paste0("---------processing chr",chosen_chr[i], "-chr", chosen_chr[j], "---------", "\n"))
 
         # filtering
         bins_fil <- filter(bins, chr1 == chosen_chr[i] & start1 >= 1 & start1 <= bins_list[i] &
                             chr2 == chosen_chr[j] & start2 >= 1 & start2 <= bins_list[j])
         bins_fil <- arrange(bins_fil, chr1, start1, chr2, start2)
+        # cat(object.size(bins_fil))
 
         # scoring
         scores <- add_scores(bins_fil)
+        # cat(object.size(scores), "\n")
 
         # matrixing
         scores <- unite(scores, chr1, c("chr1","start1"), sep = "_")
@@ -121,17 +136,22 @@ for (i in 1:length(chosen_chr)) {
             mat[chr1, chr2] <- scores$score[k] + mat[chr1, chr2]
             mat[chr2, chr1] <- scores$score[k] + mat[chr2, chr1]
         }
+        # cat(object.size(mat), "\n")
     }
 }
-print("--------------loop end--------------")
+cat("----------------loop end----------------", "\n")
+
+# output mat
+# cat("--------------writing csv--------------", "\n")
+# write.csv(mat, paste0(path, "/", output_name, "_mat.csv"))
 
 # heatmapping
-print("----------heatmapping......----------")
+cat("--------------heatmapping--------------", "\n")
 breaks <- c(0, 2^(0:max_legend(max(mat))))
 # breaks <- seq(min(mat),max(mat),length.out = 256)
 pic <- pheatmap(mat, cluster_rows = FALSE, cluster_cols = FALSE,
 				show_rownames = FALSE, show_colnames = FALSE, 
 				col = col(length(breaks)), breaks = breaks, legend = FALSE, border_color = NA,
                 filename = paste0(path, "/", output_name, ".png"))
-# print("----------writing pdf......----------")
+# cat("--------------writing pdf--------------")
 # save_pheatmap_pdf(pic, paste0(path, "/", output_name, ".pdf"))

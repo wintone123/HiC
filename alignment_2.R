@@ -13,6 +13,7 @@ save_pheatmap_pdf <- function(x, filename, width=7, height=7) {
    grid::grid.draw(x$gtable)
    dev.off()
 }
+
 max_legend <- function(a) {
     cond <- TRUE
     n <- 0
@@ -31,16 +32,16 @@ max_legend <- function(a) {
 # load info
 path <- "/mnt/c/HiC/test3"
 imput_csv <- "test_fil.csv"
-output_name <-"chr7_250k"
+output_name <-"chrX_250k"
 bin_size <- 250000
-chosen_chr1 <- c("17")
-chosen_aera1 <- c(1,80000000)
-chosen_chr2 <- c("17")
-chosen_aera2 <- c(1,80000000)
+chosen_chr1 <- c("X")
+chosen_aera1 <- c(1,150000000)
+chosen_chr2 <- c("X")
+chosen_aera2 <- c(1,150000000)
 col <- colorRampPalette(brewer.pal(9,"YlOrRd"))
 
 # load file
-print("----------loading csv......----------")
+cat("--------------loading csv--------------", "\n")
 import <- read.delim(file.path(path, imput_csv), sep = ",", row.names = 1, header = TRUE)
 
 # judgement
@@ -55,7 +56,7 @@ if (all(chosen_chr1 == chosen_chr2)) {
 }
 
 # binning
-print("------------binning......------------")
+cat("----------------binning----------------", "\n")
 bins <- data.frame(chr1 = as.character(import$chr1),
 			       start1 = import$start1 %/% bin_size + 1,
 			       chr2 = as.character(import$chr2),
@@ -63,7 +64,7 @@ bins <- data.frame(chr1 = as.character(import$chr1),
 			       stringsAsFactors = FALSE)
 
 # filtering
-print("-----------filtering......-----------")
+cat("---------------filtering---------------", "\n")
 chosen_bin1 <- chosen_aera1 %/% bin_size + 1
 chosen_bin2 <- chosen_aera2 %/% bin_size + 1
 if (mode == "SCSA") {
@@ -94,16 +95,18 @@ if (mode != "DC") { # remove same bins
 bins_fil2 <- arrange(bins_fil2, chr1, start1, chr2, start2)
 
 # output data
-# print("----------writing csv......----------")
+# cat("--------------writing csv--------------", "\n")
 # write.csv(bins_fil2, paste0(path, "/", output_name, ".csv"))
 # q()
 
 # scoring
-print("------------scoring......------------")
+cat("----------------scoring----------------", "\n")
 temp_df <- unite(bins_fil2, temp, c(1:4), sep = "_")
 scores <- data.frame(name = NA, score = NA)
-s = 1
-n = 0
+s <- 1
+n <- 0
+# j <- 0
+# K <- 0
 cond = TRUE
 while (cond) {
 	for (i in s:nrow(temp_df)) {
@@ -111,31 +114,39 @@ while (cond) {
 		if (temp_df$temp[i] == data) {
 			n <- n + 1
 			if (i == nrow(temp_df)) {
-                # print(paste0(data,"--",n))
+                # cat(paste0(data,"--",n))
 				temp <- data.frame(name = data, score = n)
 				scores <- rbind(scores, temp)
 				cond = FALSE
 			}
 		} else {
 			s <- i 
-            # print(paste0(data,"--",n))
+            # cat(paste0(data,"--",n))
 			temp <- data.frame(name = data, score = n)
 			scores <- rbind(scores, temp)
 			n <- 0
  		    break
 		}
-	}
+        # progress bar
+        # if ((j / nrow(temp_df) * 100) %/% 1 == k) { 
+        #     # cat("--------------------", k, "%--------------------", "\r", sep = "")
+        #     cat("[", paste(rep("#", (37*k/100) %/% 1),collapse = ""), 
+        #     paste(rep("_", 37-(37*k/100) %/% 1),collapse = ""), "]","\r", sep = "")
+        #     k <- k + 1
+        # }
+        # j <- j + 1
+    }
 }
 scores <- scores[2:nrow(scores),]
 # scores <- filter(scores, score >= 1) # remove fewer than 1 reads
 scores <- separate(scores, name, c("chr1","start1","chr2","start2"), sep = "_")
 
 # output data
-# print("----------writing csv......----------")
+# cat("--------------writing csv--------------", "\n")
 # write.csv(scores, paste0(path, "/", output_name, "_scores.csv"))
 
 # matrixing 
-print("-----------matrixing......-----------")
+cat("---------------matrixing---------------", "\n")
 xy_list <- vector()
 if (mode == "SCSA") {
     bin_start <- chosen_aera1[1] %/% bin_size + 1
@@ -162,16 +173,16 @@ for (i in 1:nrow(scores)) {
 }
 
 # output mat
-# print("----------writing csv......----------")
+# cat("--------------writing csv--------------", "\n")
 # write.csv(mat, paste0(path, "/", output_name, "_mat.csv"))
 
 # heatmapping
-print("----------heatmapping......----------")
+cat("--------------heatmapping--------------", "\n")
 breaks <- c(0, 2^(0:max_legend(max(mat))))
 # breaks <- seq(min(mat),max(mat),length.out = 256)
 pic <- pheatmap(mat, cluster_rows = FALSE, cluster_cols = FALSE,
 				show_rownames = FALSE, show_colnames = FALSE, 
 				col = col(length(breaks)), breaks = breaks, legend = FALSE, border_color = NA,
                 filename = paste0(path, "/", output_name, ".png"))
-# print("----------writing pdf......----------")
+# cat("--------------writing pdf--------------", "\n")
 # save_pheatmap_pdf(pic, paste0(path, "/", output_name, ".pdf"))
