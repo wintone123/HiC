@@ -172,7 +172,7 @@ for (i in 1:nrow(scores)) {
 	mat[chr2, chr1] <- scores$score[i] + mat[chr2, chr1]
 }
 
-# output mat
+# output matrix
 # cat("--------------writing csv--------------", "\n")
 # write.csv(mat, paste0(path, "/", output_name, "_mat.csv"))
 

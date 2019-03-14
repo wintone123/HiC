@@ -75,8 +75,8 @@ add_scores <- function(temp_df) {
 # load info
 path <- "/mnt/c/HiC/test3"
 imput_csv <- "test_fil.csv"
-output_name <-"chr1-X_2m"
-bin_size <- 2000000
+output_name <-"chr1-X_1m"
+bin_size <- 1000000
 chosen_chr <- c(1:22,"X")
 col <- colorRampPalette(brewer.pal(9,"YlOrRd"))
 
@@ -119,7 +119,7 @@ for (i in 1:length(chosen_chr)) {
 
         # filtering
         bins_fil <- filter(bins, chr1 == chosen_chr[i] & start1 >= 1 & start1 <= bins_list[i] &
-                            chr2 == chosen_chr[j] & start2 >= 1 & start2 <= bins_list[j])
+                           chr2 == chosen_chr[j] & start2 >= 1 & start2 <= bins_list[j])
         bins_fil <- arrange(bins_fil, chr1, start1, chr2, start2)
         # cat(object.size(bins_fil))
 
@@ -141,7 +141,7 @@ for (i in 1:length(chosen_chr)) {
 }
 cat("----------------loop end----------------", "\n")
 
-# output mat
+# output matrix
 # cat("--------------writing csv--------------", "\n")
 # write.csv(mat, paste0(path, "/", output_name, "_mat.csv"))
 
