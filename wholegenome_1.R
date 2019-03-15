@@ -6,15 +6,15 @@ library(RColorBrewer)
 library(BSgenome.Hsapiens.UCSC.hg38)
 ulimit::memory_limit(4000)
 
-#load function
-save_pheatmap_pdf <- function(x, filename, width=7, height=7) {
-   stopifnot(!missing(x))
-   stopifnot(!missing(filename))
-   pdf(filename, width=width, height=height)
-   grid::grid.newpage()
-   grid::grid.draw(x$gtable)
-   dev.off()
-}
+# load function
+# save_pheatmap_pdf <- function(x, filename, width=7, height=7) {
+#    stopifnot(!missing(x))
+#    stopifnot(!missing(filename))
+#    pdf(filename, width=width, height=height)
+#    grid::grid.newpage()
+#    grid::grid.draw(x$gtable)
+#    dev.off()
+# }
 
 max_legend <- function(a) {
     cond <- TRUE
@@ -58,7 +58,8 @@ add_scores <- function(temp_df) {
                 n <- 0
                 break
             }
-            # if ((j / nrow(temp_df) * 100) %/% 1 == k) { # progress bar
+            # progress bar
+            # if ((j / nrow(temp_df) * 100) %/% 1 == k) { 
             #     # cat("--------------------", k, "%--------------------", "\r", sep = "")
             #     cat("[", paste(rep("#", (36*k/100) %/% 1),collapse = ""), 
             #     paste(rep("_", 36-(36*k/100) %/% 1),collapse = ""), "]","\r", sep = "")
@@ -110,12 +111,12 @@ colnames(mat) <- xy_list
 rownames(mat) <- xy_list
 
 # loop
-cat("---------------loop start---------------", "\n")
+cat("---------------loop start--------------", "\n")
 bins <- filter(bins, chr1 != chr2 | start1 != start2)
 # cat(object.size(bins), "\n")
 for (i in 1:length(chosen_chr)) {
     for (j in 1:length(chosen_chr)) {
-        cat(paste0("---------processing chr",chosen_chr[i], "-chr", chosen_chr[j], "---------", "\n"))
+        cat(paste0("---------processing chr",chosen_chr[i], "-chr", chosen_chr[j], "----------", "\n"))
 
         # filtering
         bins_fil <- filter(bins, chr1 == chosen_chr[i] & start1 >= 1 & start1 <= bins_list[i] &
@@ -139,7 +140,7 @@ for (i in 1:length(chosen_chr)) {
         # cat(object.size(mat), "\n")
     }
 }
-cat("----------------loop end----------------", "\n")
+cat("----------------loop end---------------", "\n")
 
 # output matrix
 # cat("--------------writing csv--------------", "\n")
@@ -153,5 +154,5 @@ pic <- pheatmap(mat, cluster_rows = FALSE, cluster_cols = FALSE,
 				show_rownames = FALSE, show_colnames = FALSE, 
 				col = col(length(breaks)), breaks = breaks, legend = FALSE, border_color = NA,
                 filename = paste0(path, "/", output_name, ".png"))
-# cat("--------------writing pdf--------------")
+# cat("--------------writing pdf--------------", "\n")
 # save_pheatmap_pdf(pic, paste0(path, "/", output_name, ".pdf"))
