@@ -5,9 +5,9 @@ library(tidyr)
 # load info
 path <- "/mnt/c/HiC/test3"
 imput_csv <- "test_fil.csv"
-output_name <-"chr1-X_hub"
-bin_size <- 100000
-chosen_chr <- c(1:22,"X")
+output_name <-"chr1_2k_hub"
+bin_size <- 2000
+chosen_chr <- c(1)
 
 # load file
 cat("-------------loading file--------------", "\n")
@@ -56,18 +56,16 @@ cat("----------------scoring----------------", "\n")
 #     }
 # }
 
-p_list <- unique(c(bins$chr1,bins$chr2))
+p_list <- unique(c(bins$chr1, bins$chr2))
+# cat(length(p_list), "\n")
 temp <- c(bins$chr1, bins$chr2)
+scores <- data.frame(position = p_list, score = rep(0, length(p_list)))
 k <- 0
 for (i in 1:length(p_list)) {
     p <- p_list[i]           
     num <- sum((temp == p) == TRUE)
     temp <- temp[temp != p]
-    if (i == 1) {
-        scores <- data.frame(position = p, score = num)
-    } else {
-        scores <- rbind(scores, data.frame(position = p, score = num))
-    }
+    scores[scores$position == p, "score"] <- scores[scores$position == p, "score"] + num
     # progress bar
     if ((i / length(p_list) * 100) %/% 1 == k) { 
         # cat("--------------------", k, "%--------------------", "\r", sep = "")

@@ -93,7 +93,7 @@ while (cond) {
 			}
 		} else {
 			s <- i 
-            print(paste0(data,"--",n))
+            # print(paste0(data,"--",n))
 			temp <- data.frame(name = data, score = n)
 			scores <- rbind(scores, temp)
 			n <- 0

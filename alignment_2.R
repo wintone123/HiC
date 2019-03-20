@@ -32,12 +32,12 @@ max_legend <- function(a) {
 # load info
 path <- "/mnt/c/HiC/test3"
 imput_csv <- "test_fil.csv"
-output_name <-"chrX_250k"
-bin_size <- 250000
-chosen_chr1 <- c("X")
-chosen_aera1 <- c(1,150000000)
-chosen_chr2 <- c("X")
-chosen_aera2 <- c(1,150000000)
+output_name <-"chr7_20k"
+bin_size <- 20000
+chosen_chr1 <- c(7)
+chosen_aera1 <- c(25000000,30000000)
+chosen_chr2 <- c(7)
+chosen_aera2 <- c(25000000,30000000)
 col <- colorRampPalette(brewer.pal(9,"YlOrRd"))
 
 # load file

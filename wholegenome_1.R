@@ -4,7 +4,7 @@ library(tidyr)
 library(pheatmap)
 library(RColorBrewer)
 library(BSgenome.Hsapiens.UCSC.hg38)
-ulimit::memory_limit(4000)
+ulimit::memory_limit(4096)
 
 # load function
 # save_pheatmap_pdf <- function(x, filename, width=7, height=7) {
