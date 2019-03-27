@@ -1,4 +1,4 @@
-# import library
+gff# import library
 library(dplyr)
 library(tidyr)
 library(rtracklayer)
@@ -7,6 +7,7 @@ library(rtracklayer)
 path <- "/mnt/c/Hic/test3"
 import_bed <- "test.bed"
 output_csv <- "test_fil.csv"
+score=20
 
 # import file
 print("--------impoting bed......--------")
@@ -26,7 +27,7 @@ output_df <- data.frame(chr1 = import_df[c(1:(nrow(import_df)/2))*2-1, "chr"],
                         start2 = import_df[c(1:(nrow(import_df)/2))*2, "start"],
                         score2 = import_df[c(1:(nrow(import_df)/2))*2, "score"],
                         stringsAsFactors = FALSE)
-output_df <- filter(output_df, score1 >= 20 & score2 >= 20)
+output_df <- filter(output_df, score1 >= score & score2 >= score)
 output_df$score1 <- NULL
 output_df$score2 <- NULL
 
