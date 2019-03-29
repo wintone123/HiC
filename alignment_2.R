@@ -5,14 +5,14 @@ library(pheatmap)
 library(RColorBrewer)
 
 #load function
-save_pheatmap_pdf <- function(x, filename, width=7, height=7) {
-   stopifnot(!missing(x))
-   stopifnot(!missing(filename))
-   pdf(filename, width=width, height=height)
-   grid::grid.newpage()
-   grid::grid.draw(x$gtable)
-   dev.off()
-}
+# save_pheatmap_pdf <- function(x, filename, width=7, height=7) {
+#    stopifnot(!missing(x))
+#    stopifnot(!missing(filename))
+#    pdf(filename, width=width, height=height)
+#    grid::grid.newpage()
+#    grid::grid.draw(x$gtable)
+#    dev.off()
+# }
 
 max_legend <- function(a) {
     cond <- TRUE
@@ -30,19 +30,19 @@ max_legend <- function(a) {
 }
 
 # load info
-path <- "/mnt/c/HiC/test3"
-imput_csv <- "test_fil.csv"
-output_name <-"chr7_20k"
-bin_size <- 20000
-chosen_chr1 <- c(7)
-chosen_aera1 <- c(25000000,30000000)
-chosen_chr2 <- c(7)
-chosen_aera2 <- c(25000000,30000000)
+path <- "/mnt/c/HiC/test4"
+imput_csv <- "chr1.csv"
+output_name <-"chr1_1m"
+bin_size <- 1000000
+chosen_chr1 <- c(1)
+chosen_aera1 <- c(1,195000000)
+chosen_chr2 <- c(1)
+chosen_aera2 <- c(1,195000000)
 col <- colorRampPalette(brewer.pal(9,"YlOrRd"))
 
 # load file
 cat("--------------loading csv--------------", "\n")
-import <- read.delim(file.path(path, imput_csv), sep = ",", row.names = 1, header = TRUE)
+import <- readr::read_delim(file.path(path, imput_csv), delim = "\t")
 
 # judgement
 if (all(chosen_chr1 == chosen_chr2)) {
@@ -93,6 +93,7 @@ if (mode != "DC") { # remove same bins
     bins_fil2 <- filter(bins_fil, chr1 != chr2 | start1 != start2)
 } 
 bins_fil2 <- arrange(bins_fil2, chr1, start1, chr2, start2)
+# cat(nrow(bins_fil2), "\n")
 
 # output data
 # cat("--------------writing csv--------------", "\n")
@@ -105,8 +106,8 @@ temp_df <- unite(bins_fil2, temp, c(1:4), sep = "_")
 scores <- data.frame(name = NA, score = NA)
 s <- 1
 n <- 0
-# j <- 0
-# K <- 0
+j <- 0
+k <- 0
 cond = TRUE
 while (cond) {
 	for (i in s:nrow(temp_df)) {
@@ -115,26 +116,23 @@ while (cond) {
 			n <- n + 1
 			if (i == nrow(temp_df)) {
                 # cat(paste0(data,"--",n))
-				temp <- data.frame(name = data, score = n)
-				scores <- rbind(scores, temp)
+				scores <- rbind(scores, data.frame(name = data, score = n))
 				cond = FALSE
 			}
 		} else {
 			s <- i 
             # cat(paste0(data,"--",n))
-			temp <- data.frame(name = data, score = n)
-			scores <- rbind(scores, temp)
+			scores <- rbind(scores, data.frame(name = data, score = n))
 			n <- 0
  		    break
 		}
         # progress bar
-        # if ((j / nrow(temp_df) * 100) %/% 1 == k) { 
-        #     # cat("--------------------", k, "%--------------------", "\r", sep = "")
-        #     cat("[", paste(rep("#", (37*k/100) %/% 1),collapse = ""), 
-        #     paste(rep("_", 37-(37*k/100) %/% 1),collapse = ""), "]","\r", sep = "")
-        #     k <- k + 1
-        # }
-        # j <- j + 1
+        if ((j / nrow(temp_df) * 100) %/% 1 == k) { 
+            cat("[", paste(rep("#", (34*k/100) %/% 1),collapse = ""), 
+            paste(rep("_", 34-(34*k/100) %/% 1),collapse = ""), k, "%]","\r", sep = "")
+            k <- k + 1
+        }
+        j <- j + 1
     }
 }
 scores <- scores[2:nrow(scores),]

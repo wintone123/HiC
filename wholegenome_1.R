@@ -3,7 +3,6 @@ library(dplyr)
 library(tidyr)
 library(pheatmap)
 library(RColorBrewer)
-library(BSgenome.Hsapiens.UCSC.hg38)
 ulimit::memory_limit(4096)
 
 # load function
@@ -46,23 +45,20 @@ add_scores <- function(temp_df) {
                 n <- n + 1
                 if (l == nrow(temp_df)) {
                     # cat(paste0(data,"--",n))
-                    temp <- data.frame(name = data, score = n)
-                    scores <- rbind(scores, temp)
+                    scores <- rbind(scores, data.frame(name = data, score = n))
                     cond = FALSE
                 }
             } else {
                 s <- l 
-                # cat(paste0(data,"--",n))
-                temp <- data.frame(name = data, score = n)
-                scores <- rbind(scores, temp)
+                # cat(paste0(data,"--",n)
+                scores <- rbind(scores, data.frame(name = data, score = n))
                 n <- 0
                 break
             }
             # progress bar
             # if ((j / nrow(temp_df) * 100) %/% 1 == k) { 
-            #     # cat("--------------------", k, "%--------------------", "\r", sep = "")
-            #     cat("[", paste(rep("#", (36*k/100) %/% 1),collapse = ""), 
-            #     paste(rep("_", 36-(36*k/100) %/% 1),collapse = ""), "]","\r", sep = "")
+            #     cat("[", paste(rep("#", (33*k/100) %/% 1),collapse = ""), 
+            #     paste(rep("_", 33-(33*k/100) %/% 1),collapse = ""), k, "%]","\r", sep = "")
             #     k <- k + 1
             # }
             # j <- j + 1
@@ -74,21 +70,21 @@ add_scores <- function(temp_df) {
 }
 
 # load info
-path <- "/mnt/c/HiC/test3"
+path <- "/mnt/c/HiC/test4"
 imput_csv <- "test_fil.csv"
 output_name <-"chr1-X_1m"
 bin_size <- 1000000
-chosen_chr <- c(1:22,"X")
+chosen_chr <- c(1:19,"X")
 col <- colorRampPalette(brewer.pal(9,"YlOrRd"))
 
 # load file
 cat("--------------loading csv--------------", "\n")
-import <- read.delim(file.path(path, imput_csv), sep = ",", row.names = 1, header = TRUE)
+import <- readr::read_delim(file.path(path, imput_csv), delim = "\t")
 # cat(object.size(import), "\n")
 
 # load genome info
-genome <- seqinfo(BSgenome.Hsapiens.UCSC.hg38)
-seqlength_list <- seqlengths(genome)[paste0("chr", chosen_chr)]
+genome <- GenomeInfoDb::seqinfo(BSgenome.Mmusculus.UCSC.mm10::BSgenome.Mmusculus.UCSC.mm10)
+seqlength_list <- GenomeInfoDb::seqlengths(genome)[paste0("chr", chosen_chr)]
 bins_list <- seqlength_list %/% bin_size + 1
 
 # binning
@@ -116,7 +112,7 @@ bins <- filter(bins, chr1 != chr2 | start1 != start2)
 # cat(object.size(bins), "\n")
 for (i in 1:length(chosen_chr)) {
     for (j in 1:length(chosen_chr)) {
-        cat(paste0("---------processing chr",chosen_chr[i], "-chr", chosen_chr[j], "----------", "\n"))
+        cat("---------processing chr", chosen_chr[i], "-chr", chosen_chr[j], "----------", "\n", sep = "")
 
         # filtering
         bins_fil <- filter(bins, chr1 == chosen_chr[i] & start1 >= 1 & start1 <= bins_list[i] &

@@ -12,7 +12,7 @@ extra_size <- 100000
 chosen_area <- c(65000000,75000000)
 
 # load file
-import <- read.delim(file.path(path, imput_csv), sep = ",", row.names = 1, header = TRUE)
+import <- read.delim(file.path(path, imput_csv), header = TRUE)
 
 # choose area
 bin_start <- chosen_area[1] %/% bin_size + 1

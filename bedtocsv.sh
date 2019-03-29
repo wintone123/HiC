@@ -1,5 +1,5 @@
-input="/mnt/c/hic/test3/test.bed"
-output="/mnt/c/hic/test3/test2_fil.csv"
+input="/mnt/c/hic/test4/test.bed"
+output="/mnt/c/hic/test4/test_fil.csv"
 score=40
 
 # bed to csv
