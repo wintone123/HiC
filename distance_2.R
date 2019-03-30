@@ -65,7 +65,7 @@ import_fil <- filter(import_fil, chr1 == chr2 & distance >= 1)
 cat("--------------loop start---------------", "\n")
 scores <-data.frame(distance = NA, score = NA, percentage = NA, chr = NA)
 for (chr in chosen_chr) {
-    cat("-----------processing chr", chr, "------------", "\n", sep = "")
+    cat("------------processing chr", chr, "------------", "\n", sep = "")
     
     # filtering
     temp_df <- filter(import_fil, chr1 == chr & chr2 == chr)
