@@ -35,8 +35,8 @@ add_scores <- function(temp_df) {
     scores <- data.frame(name = NA, score = NA)
     s = 1
     n = 0
-    # j <- 0
-    # k <- 0
+    j <- 0
+    k <- 0
     cond = TRUE
     while (cond) {
         for (l in s:nrow(temp_df)) {
@@ -56,12 +56,12 @@ add_scores <- function(temp_df) {
                 break
             }
             # progress bar
-            # if ((j / nrow(temp_df) * 100) %/% 1 == k) { 
-            #     cat("[", paste(rep("#", (33*k/100) %/% 1),collapse = ""), 
-            #     paste(rep("_", 33-(33*k/100) %/% 1),collapse = ""), k, "%]","\r", sep = "")
-            #     k <- k + 1
-            # }
-            # j <- j + 1
+            if ((j / nrow(temp_df) * 100) %/% 1 == k) { 
+                cat("[", paste(rep("#", (33*k/100) %/% 1),collapse = ""), 
+                paste(rep("_", 33-(33*k/100) %/% 1),collapse = ""), k, "%]","\r", sep = "")
+                k <- k + 1
+            }
+            j <- j + 1
         }
     }
     scores <- scores[2:nrow(scores),]
@@ -96,6 +96,9 @@ bins <- data.frame(chr1 = as.character(import$chr1),
 			       stringsAsFactors = FALSE)
 # cat(object.size(bins), "\n")
 
+#filtering
+bins <- filter(bins, chr1 != chr2)
+
 # making matrix
 cat("-------------making matrix-------------", "\n")
 xy_list <- vector()
@@ -108,32 +111,35 @@ rownames(mat) <- xy_list
 
 # loop
 cat("---------------loop start--------------", "\n")
-bins <- filter(bins, chr1 != chr2 | start1 != start2)
 # cat(object.size(bins), "\n")
 for (i in 1:length(chosen_chr)) {
     for (j in 1:length(chosen_chr)) {
-        cat("---------processing chr", chosen_chr[i], "-chr", chosen_chr[j], "----------", "\n", sep = "")
+        chrA <- chosen_chr[i]
+        chrB <- chosen_chr[j]
+        if (chrA != chrB) {
+            cat("---------processing chr", chrA, "-chr", chrB, "----------", "\n", sep = "")
 
-        # filtering
-        bins_fil <- filter(bins, chr1 == chosen_chr[i] & start1 >= 1 & start1 <= bins_list[i] &
-                           chr2 == chosen_chr[j] & start2 >= 1 & start2 <= bins_list[j])
-        bins_fil <- arrange(bins_fil, chr1, start1, chr2, start2)
-        # cat(object.size(bins_fil))
+            # filtering
+            bins_fil <- filter(bins, chr1 == chrA & start1 >= 1 & start1 <= bins_list[i] &
+                            chr2 == chrB & start2 >= 1 & start2 <= bins_list[j])
+            bins_fil <- arrange(bins_fil, chr1, start1, chr2, start2)
+            # cat(object.size(bins_fil))
 
-        # scoring
-        scores <- add_scores(bins_fil)
-        # cat(object.size(scores), "\n")
+            # scoring
+            scores <- add_scores(bins_fil)
+            # cat(object.size(scores), "\n")
 
-        # matrixing
-        scores <- unite(scores, chr1, c("chr1","start1"), sep = "_")
-        scores <- unite(scores, chr2, c("chr2","start2"), sep = "_")
-        for (k in 1:nrow(scores)) {
-            chr1 <- scores$chr1[k]
-            chr2 <- scores$chr2[k]
-            mat[chr1, chr2] <- scores$score[k] + mat[chr1, chr2]
-            mat[chr2, chr1] <- scores$score[k] + mat[chr2, chr1]
+            # matrixing
+            scores <- unite(scores, chr1, c("chr1","start1"), sep = "_")
+            scores <- unite(scores, chr2, c("chr2","start2"), sep = "_")
+            for (k in 1:nrow(scores)) {
+                chr1 <- scores$chr1[k]
+                chr2 <- scores$chr2[k]
+                mat[chr1, chr2] <- scores$score[k] + mat[chr1, chr2]
+                mat[chr2, chr1] <- scores$score[k] + mat[chr2, chr1]
+            }
+            # cat(object.size(mat), "\n")
         }
-        # cat(object.size(mat), "\n")
     }
 }
 cat("----------------loop end---------------", "\n")
